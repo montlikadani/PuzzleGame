@@ -31,41 +31,42 @@ namespace BasicPuzzle {
                         Tag = pictureBox
                     };
 
-                    pictureBox.MouseDown += MouseDownEvent;
-                    emptyBox.DragDrop += DragDropEvent;
-                    emptyBox.DragEnter += DragEnterEvent;
+                    pictureBox.MouseDown += (sender, e) => {
+                        if (sender is PictureBox pict) {
+                            Image backgroundImage = pict.BackgroundImage;
+
+                            pict.BackgroundImage = null;
+
+                            // Outside of panel
+                            if (backgroundImage != null && pict.DoDragDrop(backgroundImage, DragDropEffects.All) == DragDropEffects.None) {
+                                pict.BackgroundImage = backgroundImage;
+                            }
+                        }
+                    };
+
+                    emptyBox.DragDrop += (sender, e) => {
+                        if (sender is PictureBox pict) {
+                            Image img = pict.BackgroundImage;
+
+                            // Replace image with the new one
+                            if (img != null) {
+                                if (pict.Tag is PictureBox pb) {
+                                    pict.BackgroundImage = (Image) e.Data.GetData(DataFormats.Bitmap);
+                                    pb.BackgroundImage = img;
+                                }
+                            } else {
+                                pict.BackgroundImage = (Image) e.Data.GetData(DataFormats.Bitmap);
+                                pict.BorderStyle = BorderStyle.None;
+                            }
+                        }
+                    };
+
+                    emptyBox.DragEnter += (sender, e) => e.Effect = DragDropEffects.All;
 
                     draggableControls.Add(pictureBox);
                     resultControls.Add(emptyBox);
                 }
             }
-        }
-
-        private void MouseDownEvent(object sender, MouseEventArgs e) {
-            if (sender is PictureBox pict) {
-                pict.Hide();
-
-                if (pict.DoDragDrop(pict.BackgroundImage, DragDropEffects.All) == DragDropEffects.None) {
-                    pict.Show();
-                }
-            }
-        }
-
-        private void DragDropEvent(object sender, DragEventArgs e) {
-            if (sender is PictureBox pict) {
-                pict.BackgroundImage = (Image)e.Data.GetData(DataFormats.Bitmap);
-                pict.BorderStyle = BorderStyle.None;
-
-                if (pict.Tag is PictureBox sec) {
-                    sec.Hide();
-                    sec.Tag = null;
-                    pict.Tag = sec;
-                }
-            }
-        }
-
-        private void DragEnterEvent(object sender, DragEventArgs e) {
-            e.Effect = DragDropEffects.All;
         }
 
         private string GetResourceFileByName(string name) {
